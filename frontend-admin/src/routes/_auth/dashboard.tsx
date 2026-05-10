@@ -1,8 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Card, Row, Col, Statistic, Table, Tag } from 'antd'
-import { UserOutlined, ShoppingCartOutlined, FileTextOutlined, LineChartOutlined } from '@ant-design/icons'
+import { Card, Row, Col, Statistic, Table, Tag, Button, Space, message } from 'antd'
+import { UserOutlined, ShoppingCartOutlined, FileTextOutlined, LineChartOutlined, ExportOutlined, DownloadOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
+import { usePermissionsStore } from '@/stores/permissions'
 
 const stats = [
   { title: '用户总数', value: 1234, icon: <UserOutlined />, color: '#1677ff' },
@@ -36,11 +37,27 @@ const columns = [
 function DashboardPage() {
   const { user } = useAuthStore()
   const { getUserByUsername } = useUsersStore()
+  const { hasButtonPermission } = usePermissionsStore()
   const currentUser = getUserByUsername(user?.username || '')
+
+  const userRoleId = user?.role || 'user'
+  const canExport = hasButtonPermission(userRoleId, 'dashboard:export')
 
   return (
     <div>
-      <h2 className="page-title">欢迎回来，{currentUser?.nickname || user?.nickname}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 className="page-title" style={{ margin: 0 }}>欢迎回来，{currentUser?.nickname || user?.nickname}</h2>
+        {canExport && (
+          <Space>
+            <Button icon={<ExportOutlined />} onClick={() => message.success('导出统计数据功能需配合后端接口使用')}>
+              导出统计
+            </Button>
+            <Button type="primary" icon={<DownloadOutlined />} onClick={() => message.success('下载报表功能需配合后端接口使用')}>
+              下载报表
+            </Button>
+          </Space>
+        )}
+      </div>
       <Row gutter={[24, 24]}>
         {stats.map((stat, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>

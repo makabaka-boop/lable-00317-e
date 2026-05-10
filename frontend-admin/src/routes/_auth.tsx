@@ -1,45 +1,68 @@
 import { createFileRoute, Outlet, redirect, useNavigate, useLocation } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { Layout, Menu, Dropdown, Avatar, Spin } from 'antd'
-import { HomeOutlined, UserOutlined, SettingOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { Layout, Menu, Dropdown, Avatar, Spin, Tag } from 'antd'
+import {
+  HomeOutlined, UserOutlined, SettingOutlined, LogoutOutlined,
+  MenuFoldOutlined, MenuUnfoldOutlined, SafetyCertificateOutlined
+} from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
-import type { UserRole } from '@/types'
+import { usePermissionsStore } from '@/stores/permissions'
+import { pathToMenuKey } from '@/utils/permissions'
 import './auth.scss'
 
 const { Sider, Header, Content } = Layout
 
-interface MenuItem {
-  key: string
-  icon: React.ReactNode
-  label: string
-  roles?: UserRole[]
+const iconMap: Record<string, React.ReactNode> = {
+  HomeOutlined: <HomeOutlined />,
+  UserOutlined: <UserOutlined />,
+  SettingOutlined: <SettingOutlined />,
+  SafetyCertificateOutlined: <SafetyCertificateOutlined />
 }
-
-const allMenuItems: MenuItem[] = [
-  { key: '/dashboard', icon: <HomeOutlined />, label: '仪表盘' },
-  { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: ['admin'] },
-  { key: '/settings', icon: <SettingOutlined />, label: '系统设置' }
-]
 
 function AuthLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout, checkAuth, loading } = useAuthStore()
+  const { user, logout, checkAuth, loading, isAuthenticated } = useAuthStore()
   const { getUserByUsername } = useUsersStore()
+  const { menuTree, hasMenuPermission, getRoleById } = usePermissionsStore()
   const [collapsed, setCollapsed] = useState(false)
   const [checking, setChecking] = useState(true)
 
   const currentUser = getUserByUsername(user?.username || '')
+  const userRoleId = user?.role || 'user'
+  const userRole = getRoleById(userRoleId)
 
   useEffect(() => {
     checkAuth().finally(() => setChecking(false))
   }, [checkAuth])
 
-  const menuItems = allMenuItems.filter(item => {
-    if (!item.roles) return true
-    return user?.role && item.roles.includes(user.role)
-  })
+  useEffect(() => {
+    if (!checking && !loading && isAuthenticated && user) {
+      const menuKey = pathToMenuKey(location.pathname)
+      if (menuKey && !hasMenuPermission(userRoleId, menuKey)) {
+        navigate({ to: '/403' })
+      }
+    }
+  }, [checking, loading, isAuthenticated, user, location.pathname, userRoleId, hasMenuPermission, navigate])
+
+  const buildMenuItems = (menus: typeof menuTree): any[] => {
+    return menus
+      .filter(menu => hasMenuPermission(userRoleId, menu.key))
+      .map(menu => {
+        const children = menu.children ? buildMenuItems(menu.children) : undefined
+        return {
+          key: menu.path,
+          icon: menu.icon ? iconMap[menu.icon] : undefined,
+          label: menu.label,
+          children: children && children.length > 0 ? children : undefined,
+          onClick: () => navigate({ to: menu.path })
+        }
+      })
+      .filter(item => !item.children || item.children.length > 0)
+  }
+
+  const menuItems = buildMenuItems(menuTree)
 
   const handleLogout = async () => {
     await logout()
@@ -62,12 +85,7 @@ function AuthLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          items={menuItems.map(item => ({
-            key: item.key,
-            icon: item.icon,
-            label: item.label,
-            onClick: () => navigate({ to: item.key })
-          }))}
+          items={menuItems}
         />
       </Sider>
       <Layout>
@@ -79,18 +97,25 @@ function AuthLayout() {
               <MenuFoldOutlined className="trigger" onClick={() => setCollapsed(true)} />
             )}
           </div>
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: handleLogout }
-              ]
-            }}
-          >
-            <div className="user-info">
-              <Avatar src={currentUser?.avatar || user?.avatar} />
-              <span className="username">{currentUser?.nickname || user?.nickname}</span>
-            </div>
-          </Dropdown>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {userRole && (
+              <Tag color={userRole.isSystem ? 'gold' : 'blue'}>
+                角色: {userRole.name}
+              </Tag>
+            )}
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: handleLogout }
+                ]
+              }}
+            >
+              <div className="user-info">
+                <Avatar src={currentUser?.avatar || user?.avatar} />
+                <span className="username">{currentUser?.nickname || user?.nickname}</span>
+              </div>
+            </Dropdown>
+          </div>
         </Header>
         <Content className="auth-content">
           <Outlet />
