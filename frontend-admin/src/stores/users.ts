@@ -6,7 +6,7 @@ export interface UserItem {
   nickname: string
   avatar: string
   email: string
-  role: 'admin' | 'user'
+  role: string
   status: 'active' | 'inactive'
   createdAt: string
 }

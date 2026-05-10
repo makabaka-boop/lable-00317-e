@@ -15,6 +15,7 @@ import { Route as R403RouteImport } from './routes/403'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthUsersRouteImport } from './routes/_auth/users'
 import { Route as AuthSettingsRouteImport } from './routes/_auth/settings'
+import { Route as AuthPermissionRouteImport } from './routes/_auth/permission'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 
 const LoginRoute = LoginRouteImport.update({
@@ -46,6 +47,11 @@ const AuthSettingsRoute = AuthSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthPermissionRoute = AuthPermissionRouteImport.update({
+  id: '/permission',
+  path: '/permission',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/403': typeof R403Route
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/permission': typeof AuthPermissionRoute
   '/settings': typeof AuthSettingsRoute
   '/users': typeof AuthUsersRoute
 }
@@ -65,6 +72,7 @@ export interface FileRoutesByTo {
   '/403': typeof R403Route
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/permission': typeof AuthPermissionRoute
   '/settings': typeof AuthSettingsRoute
   '/users': typeof AuthUsersRoute
 }
@@ -75,14 +83,29 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/permission': typeof AuthPermissionRoute
   '/_auth/settings': typeof AuthSettingsRoute
   '/_auth/users': typeof AuthUsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/403' | '/login' | '/dashboard' | '/settings' | '/users'
+  fullPaths:
+    | '/'
+    | '/403'
+    | '/login'
+    | '/dashboard'
+    | '/permission'
+    | '/settings'
+    | '/users'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/403' | '/login' | '/dashboard' | '/settings' | '/users'
+  to:
+    | '/'
+    | '/403'
+    | '/login'
+    | '/dashboard'
+    | '/permission'
+    | '/settings'
+    | '/users'
   id:
     | '__root__'
     | '/'
@@ -90,6 +113,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/login'
     | '/_auth/dashboard'
+    | '/_auth/permission'
     | '/_auth/settings'
     | '/_auth/users'
   fileRoutesById: FileRoutesById
@@ -145,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/permission': {
+      id: '/_auth/permission'
+      path: '/permission'
+      fullPath: '/permission'
+      preLoaderRoute: typeof AuthPermissionRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
@@ -157,12 +188,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthPermissionRoute: typeof AuthPermissionRoute
   AuthSettingsRoute: typeof AuthSettingsRoute
   AuthUsersRoute: typeof AuthUsersRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthPermissionRoute: AuthPermissionRoute,
   AuthSettingsRoute: AuthSettingsRoute,
   AuthUsersRoute: AuthUsersRoute,
 }
