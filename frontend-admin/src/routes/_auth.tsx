@@ -1,32 +1,27 @@
 import { createFileRoute, Outlet, redirect, useNavigate, useLocation } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Layout, Menu, Dropdown, Avatar, Spin } from 'antd'
-import { HomeOutlined, UserOutlined, SettingOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { HomeOutlined, UserOutlined, SettingOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined, SafetyOutlined } from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
-import type { UserRole } from '@/types'
+import { usePermissionStore, menuTree } from '@/stores/permission'
 import './auth.scss'
 
 const { Sider, Header, Content } = Layout
 
-interface MenuItem {
-  key: string
-  icon: React.ReactNode
-  label: string
-  roles?: UserRole[]
+const iconComponentMap: Record<string, React.ReactNode> = {
+  HomeOutlined: <HomeOutlined />,
+  UserOutlined: <UserOutlined />,
+  SettingOutlined: <SettingOutlined />,
+  SafetyOutlined: <SafetyOutlined />,
 }
-
-const allMenuItems: MenuItem[] = [
-  { key: '/dashboard', icon: <HomeOutlined />, label: '仪表盘' },
-  { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: ['admin'] },
-  { key: '/settings', icon: <SettingOutlined />, label: '系统设置' }
-]
 
 function AuthLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout, checkAuth, loading } = useAuthStore()
   const { getUserByUsername } = useUsersStore()
+  const { isMenuVisible, isRouteAccessible } = usePermissionStore()
   const [collapsed, setCollapsed] = useState(false)
   const [checking, setChecking] = useState(true)
 
@@ -36,10 +31,27 @@ function AuthLayout() {
     checkAuth().finally(() => setChecking(false))
   }, [checkAuth])
 
-  const menuItems = allMenuItems.filter(item => {
-    if (!item.roles) return true
-    return user?.role && item.roles.includes(user.role)
-  })
+  useEffect(() => {
+    if (!user || checking) return
+    const currentPath = location.pathname
+    if (currentPath && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/403') {
+      if (!isRouteAccessible(user.role, currentPath)) {
+        navigate({ to: '/403' })
+      }
+    }
+  }, [user, location.pathname, checking, isRouteAccessible, navigate])
+
+  const menuItems = useMemo(() => {
+    if (!user) return []
+    return menuTree
+      .filter((node) => isMenuVisible(user.role, node.key))
+      .map((node) => ({
+        key: node.path || node.key,
+        icon: node.icon ? iconComponentMap[node.icon] || null : null,
+        label: node.label,
+        menuKey: node.key,
+      }))
+  }, [user, isMenuVisible])
 
   const handleLogout = async () => {
     await logout()
@@ -66,7 +78,7 @@ function AuthLayout() {
             key: item.key,
             icon: item.icon,
             label: item.label,
-            onClick: () => navigate({ to: item.key })
+            onClick: () => navigate({ to: item.key }),
           }))}
         />
       </Sider>
