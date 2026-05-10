@@ -1,0 +1,195 @@
+@use './variables.scss' as *;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif;
+  font-size: 14px;
+  color: $color-text-primary;
+  background-color: $color-bg;
+}
+
+a {
+  color: $color-primary;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}
+
+// 登录页样式
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #2d3a4a;
+  padding: $spacing-md;
+  position: relative;
+  overflow: hidden;
+
+  // 左上装饰圆形
+  &::before {
+    content: '';
+    position: absolute;
+    left: -80px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  // 右下装饰圆形
+  &::after {
+    content: '';
+    position: absolute;
+    right: -60px;
+    bottom: -60px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  padding: 48px 48px 40px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f6f7 100%);
+  position: relative;
+  z-index: 1;
+
+  .login-logo {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 28px;
+    background: #2d3a4a;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 24px;
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 36px;
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 13px;
+      color: #999;
+    }
+  }
+
+  .ant-input-affix-wrapper {
+    padding: 14px 16px;
+    border-radius: 6px;
+    border: 1px solid #e5e5e5;
+    background: #fff;
+
+    &:hover, &:focus, &.ant-input-affix-wrapper-focused {
+      border-color: #d0d0d0;
+      box-shadow: none;
+    }
+
+    .ant-input {
+      font-size: 14px;
+      
+      &::placeholder {
+        color: #bbb;
+      }
+    }
+
+    .anticon {
+      color: #c0c0c0;
+      font-size: 16px;
+    }
+  }
+
+  .ant-form-item {
+    margin-bottom: 20px;
+  }
+
+  .ant-btn-primary {
+    height: 46px;
+    border-radius: 6px;
+    background: #2d3a4a !important;
+    border: none;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 8px;
+    text-indent: 8px;
+
+    &:hover, &:focus {
+      background: #3d4d5f !important;
+    }
+
+    &:active {
+      background: #252f3c !important;
+    }
+  }
+
+  .login-footer {
+    text-align: center;
+    margin-top: 28px;
+    color: #bbb;
+    font-size: 12px;
+  }
+}
+
+// 403 页面
+.forbidden-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-bg;
+
+  .forbidden-content {
+    text-align: center;
+
+    h1 {
+      font-size: 72px;
+      color: $color-danger;
+      margin: 16px 0;
+    }
+
+    p {
+      font-size: 16px;
+      color: $color-text-secondary;
+      margin-bottom: 24px;
+    }
+  }
+}

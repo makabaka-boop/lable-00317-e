@@ -1,0 +1,68 @@
+@use '../styles/variables.scss' as *;
+
+.auth-layout {
+  min-height: 100vh;
+
+  .logo {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 600;
+    background: #001529;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .auth-header {
+    background: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .trigger {
+      font-size: 18px;
+      cursor: pointer;
+      transition: color 0.3s;
+
+      &:hover {
+        color: $color-primary;
+      }
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.3s;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
+
+      .username {
+        color: $color-text-primary;
+      }
+    }
+  }
+
+  .auth-content {
+    margin: 24px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    min-height: calc(100vh - 64px - 48px);
+  }
+}
