@@ -1,10 +1,18 @@
-import { createFileRoute, Outlet, redirect, useNavigate, useLocation } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect, useNavigate, useLocation, Navigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { Layout, Menu, Dropdown, Avatar, Spin } from 'antd'
-import { HomeOutlined, UserOutlined, SettingOutlined, LogoutOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import { Layout, Menu, Dropdown, Avatar, Spin, Tag } from 'antd'
+import {
+  HomeOutlined,
+  UserOutlined,
+  SettingOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  TeamOutlined
+} from '@ant-design/icons'
 import { useAuthStore } from '@/stores/auth'
 import { useUsersStore } from '@/stores/users'
-import type { UserRole } from '@/types'
+import { usePermissionsStore } from '@/stores/permissions'
 import './auth.scss'
 
 const { Sider, Header, Content } = Layout
@@ -13,33 +21,43 @@ interface MenuItem {
   key: string
   icon: React.ReactNode
   label: string
-  roles?: UserRole[]
+  permissionKey: string
 }
 
 const allMenuItems: MenuItem[] = [
-  { key: '/dashboard', icon: <HomeOutlined />, label: '仪表盘' },
-  { key: '/users', icon: <UserOutlined />, label: '用户管理', roles: ['admin'] },
-  { key: '/settings', icon: <SettingOutlined />, label: '系统设置' }
+  { key: '/dashboard', icon: <HomeOutlined />, label: '仪表盘', permissionKey: '/dashboard' },
+  { key: '/users', icon: <UserOutlined />, label: '用户管理', permissionKey: '/users' },
+  { key: '/roles', icon: <TeamOutlined />, label: '角色权限', permissionKey: '/roles' },
+  { key: '/settings', icon: <SettingOutlined />, label: '系统设置', permissionKey: '/settings' }
 ]
 
 function AuthLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, logout, checkAuth, loading } = useAuthStore()
-  const { getUserByUsername } = useUsersStore()
+  const { user, logout, checkAuth, loading, isAuthenticated } = useAuthStore()
+  const users = useUsersStore(state => state.users)
+  const roles = usePermissionsStore(state => state.roles)
+  const userRoleMap = usePermissionsStore(state => state.userRoleMap)
+  
+  const getUserByUsername = (username: string) => {
+    return users.find(u => u.username === username)
+  }
   const [collapsed, setCollapsed] = useState(false)
   const [checking, setChecking] = useState(true)
 
   const currentUser = getUserByUsername(user?.username || '')
+  
+  const userRoleId = user ? userRoleMap[user.username] : null
+  const userRole = userRoleId ? roles.find(r => r.id === userRoleId) : null
+  const userMenuPermissions = userRole?.menuPermissions || []
 
   useEffect(() => {
     checkAuth().finally(() => setChecking(false))
   }, [checkAuth])
 
-  const menuItems = allMenuItems.filter(item => {
-    if (!item.roles) return true
-    return user?.role && item.roles.includes(user.role)
-  })
+  const menuItems = allMenuItems.filter(item =>
+    userMenuPermissions.includes(item.permissionKey)
+  )
 
   const handleLogout = async () => {
     await logout()
@@ -52,6 +70,10 @@ function AuthLayout() {
         <Spin size="large" />
       </div>
     )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" search={{ redirect: window.location.pathname }} />
   }
 
   return (
@@ -79,18 +101,25 @@ function AuthLayout() {
               <MenuFoldOutlined className="trigger" onClick={() => setCollapsed(true)} />
             )}
           </div>
-          <Dropdown
-            menu={{
-              items: [
-                { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: handleLogout }
-              ]
-            }}
-          >
-            <div className="user-info">
-              <Avatar src={currentUser?.avatar || user?.avatar} />
-              <span className="username">{currentUser?.nickname || user?.nickname}</span>
-            </div>
-          </Dropdown>
+          <div className="header-right">
+            {userRole && (
+              <Tag color="blue" className="role-tag">
+                {userRole.name}
+              </Tag>
+            )}
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: handleLogout }
+                ]
+              }}
+            >
+              <div className="user-info">
+                <Avatar src={currentUser?.avatar || user?.avatar} />
+                <span className="username">{currentUser?.nickname || user?.nickname}</span>
+              </div>
+            </Dropdown>
+          </div>
         </Header>
         <Content className="auth-content">
           <Outlet />
@@ -101,10 +130,21 @@ function AuthLayout() {
 }
 
 export const Route = createFileRoute('/_auth')({
-  beforeLoad: () => {
+  beforeLoad: ({ location }) => {
     const token = useAuthStore.getState().token
     if (!token) {
-      throw redirect({ to: '/login', search: { redirect: window.location.pathname } })
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
+
+    const username = useAuthStore.getState().user?.username
+    if (username) {
+      const hasAccess = usePermissionsStore.getState().hasMenuPermission(username, location.pathname)
+      if (!hasAccess) {
+        const publicPaths = ['/login', '/dashboard']
+        if (!publicPaths.includes(location.pathname)) {
+          throw redirect({ to: '/403' })
+        }
+      }
     }
   },
   component: AuthLayout

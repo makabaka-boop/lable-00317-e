@@ -39,6 +39,16 @@
       }
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      .role-tag {
+        margin: 0;
+      }
+    }
+
     .user-info {
       display: flex;
       align-items: center;

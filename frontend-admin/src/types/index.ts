@@ -25,3 +25,32 @@ export interface ApiResponse<T = unknown> {
   message: string
   data: T
 }
+
+export interface MenuPermission {
+  key: string
+  title: string
+  children?: MenuPermission[]
+  actions?: string[]
+}
+
+export interface Role {
+  id: string
+  name: string
+  code: string
+  description: string
+  menuPermissions: string[]
+  actionPermissions: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RolePermission {
+  menuKeys: string[]
+  actions: string[]
+}
+
+export interface PermissionDiff {
+  added: string[]
+  removed: string[]
+}
+
